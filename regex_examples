@@ -1,0 +1,93 @@
+Basics 
+
+pattern hello just matches hello nothing else not even Hello 
+
+
+case insensetive match (?i) 
+
+eg   
+(?i)hello 
+
+matches hello HELLO HelLo 
+
+
+Anchors
+
+^hello
+
+the ^ matches start of string
+hello world but not say hello 
+
+$ end of string 
+
+cat$
+matches  cute cat but not cate cute
+
+^$  exact match 
+
+^hamza$ 
+matches hello and not anything else
+
+
+
+Character Classes 
+
+\d matches any digit
+\D matches only non digits
+
+\w matcehs any word incldeing and _ but no other special character and also not whitespaces
+\W matches non words means special character and white spaces
+
+\s only matches whitespaces
+\S only matches other than while spaces
+
+
+
+Quantifiers 
+
+match one or more (+)
+pattern \d+
+matches 123 234 but not ""
+
+pattern \w+
+matches hello world a but not ""
+
+
+matches zero or more (*)
+pattern \w* 
+Matches hello, ``, world 
+
+
+match specific counts
+pattern \d{3}
+matches 123, 456 
+does not match 12, 1234
+
+patterh \d{2,4}
+matches 1234, 3982 not 2 or 234892
+
+
+
+
+capturing groups
+
+pattern (hello|hi)
+matches hello, hi 
+does not match he
+
+for phone numbers 
+(\d{3})-(\d{4})
+
+matches 123-4567
+
+create two groups 123 and 4567
+saves the groups for later use
+
+real world examples
+
+pattern ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+
+
+
+regex for email
+^[a-zA-z0-9.-_+%]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$

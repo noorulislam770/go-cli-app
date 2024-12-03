@@ -103,6 +103,7 @@ func validateArgs() (string, string, string) {
 		os.Mkdir(targetFolder, 0755)
 		fmt.Printf("create target folder %s .\n", targetFolder)
 	}
+	fmt.Printf("validation successful\nsource folder :%v \ndest folder : %v \nregex : %v \n", currentFolder, targetFolder, regex)
 
 	return currentFolder, regex, targetFolder
 
@@ -118,9 +119,14 @@ func getFilesForRegex(files []string, re string) []string {
 		return matchedFiles
 	}
 
+	fmt.Printf("checking files for regex %v \n", re)
 	for _, file := range files {
+		fmt.Printf("checking for file %v \n", file)
 		if pattern.MatchString(file) {
 			matchedFiles = append(matchedFiles, file)
+			fmt.Printf("file matched, appending to the list\n")
+		} else {
+			fmt.Printf("file didnot match the regex\n")
 		}
 	}
 	return matchedFiles
@@ -140,15 +146,18 @@ func getFileNames(folder string) []string {
 			files = append(files, entry.Name())
 		}
 	}
-
+	fmt.Println("read files for the folder")
+	fmt.Println(files)
 	return files
 }
 
 func folderExists(path string) bool {
 	info, error := os.Stat(path)
+	fmt.Printf("\nChecking for folders Existance \n")
 	if os.IsNotExist(error) {
+		println("folder does not exist")
 		return false
 	}
-
+	fmt.Println("Folder Exists")
 	return info.IsDir()
 }
