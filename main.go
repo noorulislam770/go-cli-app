@@ -32,12 +32,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	currentFolder, regex, targetfolder := validateArgs()
+	// currentFolder, regex, targetfolder := validateArgs()
 
-	allFiles := getFileNames(currentFolder)
-	matchedFiles := getFilesForRegex(allFiles, regex)
+	// allFiles := getFileNames(currentFolder)
+	// matchedFiles := getFilesForRegex(allFiles, regex)
 
-	moveFiles(currentFolder, matchedFiles, targetfolder)
+	// moveFiles(currentFolder, matchedFiles, targetfolder)
 
 }
 
@@ -106,13 +106,14 @@ func printUsageInfo() {
 	fmt.Fprintf(os.Stderr, "\nExample:\n")
 	fmt.Fprintf(os.Stderr, "  %s ./source \".*\\.txt$\" ./target\n", filepath.Base(os.Args[0]))
 	fmt.Fprintf(os.Stderr, "  %s -i\n", filepath.Base(os.Args[0]))
+
 }
 
-func handleNakedMode(options *CLIOptions) (*CLIOptions, error) {
+func handleNakedMode(options *CLIOptions) {
 	displayModeSelection(options)
 
 	// printUsageInfo()
-	return handleInteractiveMode(options)
+	// return handleInteractiveMode(options)
 }
 
 func displayModeSelection(options *CLIOptions) {
@@ -131,6 +132,7 @@ func displayModeSelection(options *CLIOptions) {
 			handleInteractiveMode(options)
 		case "h":
 			printUsageInfo()
+			displayModeSelection(options)
 		case "q":
 			fmt.Println("Goodbye!")
 			os.Exit(1)
@@ -180,7 +182,7 @@ func handleInteractiveMode(options *CLIOptions) (*CLIOptions, error) {
 			return nil, fmt.Errorf("failed to create target folder: %v", err)
 		}
 	}
-
+	fmt.Println(options)
 	return options, nil
 }
 
@@ -188,6 +190,7 @@ func handleDirectMode(options *CLIOptions) (*CLIOptions, error) {
 	args := flag.Args()
 	if len(args) != 3 {
 		flag.Usage()
+		fmt.Println(len(args))
 		return nil, fmt.Errorf("incorrect number of arguments")
 	}
 
@@ -322,8 +325,11 @@ func folderExists(path string) bool {
 		println("folder does not exist")
 		return false
 	}
-	fmt.Println("Folder Exists")
-	return info.IsDir()
+	isDir := info.IsDir()
+	if isDir {
+		fmt.Println("Folder Exists")
+	}
+	return isDir
 }
 
 func ProcessFiles(options *CLIOptions) error {
