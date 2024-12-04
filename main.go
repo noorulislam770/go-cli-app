@@ -1,15 +1,36 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
+type CLIOptions struct {
+	SourceFolder    string
+	RegexPattern    string
+	TargetFolder    string
+	InteractiveMode bool
+}
+
 func main() {
+
+	options, err := RunCli()
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := ProcessFiles(options); err != nil {
+		fmt.Fprintf(os.Stderr, "Error processing files %v\n", err)
+		os.Exit(1)
+	}
 
 	currentFolder, regex, targetfolder := validateArgs()
 
@@ -44,6 +65,108 @@ func moveFiles(currentFolder string, matchedFiles []string, targetFolder string)
 
 	}
 
+}
+
+func RunCli() (*CLIOptions, error) {
+	interactive := flag.Bool("i", false, "Run in interactive mode.")
+	help := flag.Bool("h", false, "Show help Messages")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage of File Mover:\n\n")
+		fmt.Fprintf(os.Stderr, "  Used for moving files based on a regex syntax:\n")
+		fmt.Fprintf(os.Stderr, "  How to use :\n")
+		fmt.Fprintf(os.Stderr, "  Direct mode: %s [source folder] [regex pattern] [target folder]\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "  Interactive mode: %s -i\n\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nExample:\n")
+		fmt.Fprintf(os.Stderr, "  %s ./source \".*\\.txt$\" ./target\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "  %s -i\n", filepath.Base(os.Args[0]))
+	}
+	flag.Parse()
+
+	if *help {
+		flag.Usage()
+		os.Exit(0)
+	}
+
+	options := &CLIOptions{
+		InteractiveMode: *interactive,
+	}
+
+	if *interactive {
+		return handleInteractiveMode(options)
+	}
+	return handleDirectMode(options)
+}
+
+func handleInteractiveMode(options *CLIOptions) (*CLIOptions, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Get source folder
+	fmt.Print("Enter source folder path: ")
+	sourceFolder, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, fmt.Errorf("error reading source folder: %v", err)
+	}
+	options.SourceFolder = strings.TrimSpace(sourceFolder)
+
+	// Validate source folder
+	if !folderExists(options.SourceFolder) {
+		return nil, fmt.Errorf("source folder does not exist: %s", options.SourceFolder)
+	}
+
+	// Get regex pattern
+	fmt.Print("Enter regex pattern (e.g., .*\\.txt$ for txt files): ")
+	regexPattern, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, fmt.Errorf("error reading regex pattern: %v", err)
+	}
+	options.RegexPattern = strings.TrimSpace(regexPattern)
+
+	// Get target folder
+	fmt.Print("Enter target folder path: ")
+	targetFolder, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, fmt.Errorf("error reading target folder: %v", err)
+	}
+	options.TargetFolder = strings.TrimSpace(targetFolder)
+
+	// Create target folder if it doesn't exist
+	if !folderExists(options.TargetFolder) {
+		fmt.Printf("Target folder doesn't exist. Creating: %s\n", options.TargetFolder)
+		if err := os.MkdirAll(options.TargetFolder, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create target folder: %v", err)
+		}
+	}
+
+	return options, nil
+}
+
+func handleDirectMode(options *CLIOptions) (*CLIOptions, error) {
+	args := flag.Args()
+	if len(args) != 3 {
+		flag.Usage()
+		return nil, fmt.Errorf("incorrect number of arguments")
+	}
+
+	options.SourceFolder = args[0]
+	options.RegexPattern = args[1]
+	options.TargetFolder = args[2]
+
+	// Validate inputs
+	if !folderExists(options.SourceFolder) {
+		return nil, fmt.Errorf("source folder does not exist: %s", options.SourceFolder)
+	}
+
+	if !folderExists(options.TargetFolder) {
+		fmt.Printf("Target folder doesn't exist. Creating: %s\n", options.TargetFolder)
+		if err := os.MkdirAll(options.TargetFolder, 0755); err != nil {
+			return nil, fmt.Errorf("failed to create target folder: %v", err)
+		}
+	}
+
+	return options, nil
 }
 
 func copyAndDelete(sourcePath string, destPath string) error {
@@ -160,4 +283,19 @@ func folderExists(path string) bool {
 	}
 	fmt.Println("Folder Exists")
 	return info.IsDir()
+}
+
+func ProcessFiles(options *CLIOptions) error {
+	allFiles := getFileNames(options.SourceFolder)
+	if len(allFiles) == 0 {
+		fmt.Errorf("no files matches the regular expressions ")
+	}
+
+	matchedFiles := getFilesForRegex(allFiles, options.RegexPattern)
+	if len(matchedFiles) == 0 {
+		return fmt.Errorf("no files matched the regex pattern")
+	}
+
+	moveFiles(options.SourceFolder, matchedFiles, options.TargetFolder)
+	return nil
 }

@@ -15,7 +15,7 @@ func TestGetFileNames(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Create test files
-	testFiles := []string{"test1.txt", "test2.txt"}
+	testFiles := []string{"test1.txt", "test2.txt", "apples.jpg", "accounts.pdf", "cv.doc", "sheets.xls"}
 	for _, fname := range testFiles {
 		if err := os.WriteFile(filepath.Join(tmpDir, fname), []byte("test"), 0666); err != nil {
 			t.Fatalf("Failed to create test file: %v", err)
