@@ -72,16 +72,7 @@ func RunCli() (*CLIOptions, error) {
 	help := flag.Bool("h", false, "Show help Messages")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage of File Mover:\n\n")
-		fmt.Fprintf(os.Stderr, "  Used for moving files based on a regex syntax:\n")
-		fmt.Fprintf(os.Stderr, "  How to use :\n")
-		fmt.Fprintf(os.Stderr, "  Direct mode: %s [source folder] [regex pattern] [target folder]\n", filepath.Base(os.Args[0]))
-		fmt.Fprintf(os.Stderr, "  Interactive mode: %s -i\n\n", filepath.Base(os.Args[0]))
-		fmt.Fprintf(os.Stderr, "Flags:\n")
-		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nExample:\n")
-		fmt.Fprintf(os.Stderr, "  %s ./source \".*\\.txt$\" ./target\n", filepath.Base(os.Args[0]))
-		fmt.Fprintf(os.Stderr, "  %s -i\n", filepath.Base(os.Args[0]))
+		printUsageInfo()
 	}
 	flag.Parse()
 
@@ -94,10 +85,60 @@ func RunCli() (*CLIOptions, error) {
 		InteractiveMode: *interactive,
 	}
 
+	if len(os.Args) == 1 {
+		handleNakedMode(options)
+	}
+
 	if *interactive {
 		return handleInteractiveMode(options)
 	}
 	return handleDirectMode(options)
+}
+
+func printUsageInfo() {
+	fmt.Fprintf(os.Stderr, "Usage of File Mover:\n\n")
+	fmt.Fprintf(os.Stderr, "  Used for moving files based on a regex syntax:\n")
+	fmt.Fprintf(os.Stderr, "  How to use :\n")
+	fmt.Fprintf(os.Stderr, "  Direct mode: %s [source folder] [regex pattern] [target folder]\n", filepath.Base(os.Args[0]))
+	fmt.Fprintf(os.Stderr, "  Interactive mode: %s -i\n\n", filepath.Base(os.Args[0]))
+	fmt.Fprintf(os.Stderr, "Flags:\n")
+	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\nExample:\n")
+	fmt.Fprintf(os.Stderr, "  %s ./source \".*\\.txt$\" ./target\n", filepath.Base(os.Args[0]))
+	fmt.Fprintf(os.Stderr, "  %s -i\n", filepath.Base(os.Args[0]))
+}
+
+func handleNakedMode(options *CLIOptions) (*CLIOptions, error) {
+	displayModeSelection(options)
+
+	// printUsageInfo()
+	return handleInteractiveMode(options)
+}
+
+func displayModeSelection(options *CLIOptions) {
+	fmt.Println("Welcome to FileMover!")
+	fmt.Println("Select a mode:")
+	fmt.Println("  i - Interactive mode")
+	fmt.Println("  h - Help")
+	fmt.Println("  q - Quit")
+	fmt.Print("Enter your choice: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		input := strings.TrimSpace(scanner.Text())
+		switch input {
+		case "i":
+			fmt.Println("Entering interactive mode...")
+			handleInteractiveMode(options)
+		case "h":
+			printUsageInfo()
+		case "q":
+			fmt.Println("Goodbye!")
+			os.Exit(1)
+		default:
+			fmt.Println("Invalid option. Please try again.")
+			displayModeSelection(options)
+		}
+	}
 }
 
 func handleInteractiveMode(options *CLIOptions) (*CLIOptions, error) {
